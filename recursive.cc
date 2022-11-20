@@ -86,21 +86,6 @@ int total_cost(set<int> &S, vector<int> &weights) {
   return total;
 }
 
-// struct Vertex{
-// 	int weight; 
-// 	Vertex(int weight, ) : weight(weight){}
-// };
-
-// struct Edge{
-// 	pair<int, int> connectedVerts; 
-// 	Edge(int vert1, int vert2) : connectedVerts(pair<int, int>(vert1, vert2)){} 
-// };
-
-// struct Graph{
-// 	std::vector<Edge> edges; 
-// 	std::vector<Vertex> verticies;
-// };
-
 class MWVC{
 public:
 	MWVC(vector<set<int>>& originalGraph, vector<int>& originalWeights) : originalGraph(originalGraph), originalWeights(originalWeights) { }
