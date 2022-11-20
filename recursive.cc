@@ -1,9 +1,3 @@
-//
-// File:brute_force.cc
-// Purpose:  Computes the minimum weighted vertex cover by brute force.
-//
-// Run:  ./a.out weights graph
-//
 #include <cassert>
 #include <bitset>
 #include <set>
@@ -92,75 +86,180 @@ int total_cost(set<int> &S, vector<int> &weights) {
   return total;
 }
 
-set<int> MWVC(vector<set<int> > &graph,vector<int> &weights) {
+// struct Vertex{
+// 	int weight; 
+// 	Vertex(int weight, ) : weight(weight){}
+// };
 
-  int n = graph.size();
-  int N = 1<<n;
-  cout << "Searching all possible VC's" << endl;
-  cout << "There are " << N << " possible sets" << endl;
-  bool found = false;
-  set<int> best;
-  int best_val;
-  for (int I = 0;I < N;I++) {
-    bitset<64> x(I);
-    set<int> S;
-    for (int j=0;j<n;j++) {
-      if (x[j]==1) {
-	S.insert(j);
-      }
-    }
-    if (is_VC(graph,S)) {
-      if (!found) {
-	best_val = total_cost(S,weights);
-	best = S;
-	found = true;
-      } else {
-	int try_next = total_cost(S,weights);
-	if (try_next < best_val) {
-	  best = S;
-	  best_val = try_next;
+// struct Edge{
+// 	pair<int, int> connectedVerts; 
+// 	Edge(int vert1, int vert2) : connectedVerts(pair<int, int>(vert1, vert2)){} 
+// };
+
+// struct Graph{
+// 	std::vector<Edge> edges; 
+// 	std::vector<Vertex> verticies;
+// };
+
+class MWVC{
+public:
+	MWVC(vector<set<int>>& originalGraph, vector<int>& originalWeights) : originalGraph(originalGraph), originalWeights(originalWeights) { }
+	set<int> solve(){
+		set<int> results; 
+
+		vector<bool> graphVisits(originalGraph.size(), false); 
+		results = process(originalGraph, originalWeights, graphVisits); 
+		return results; 
 	}
-      }
-    }
-  }
-  return best;
-}
 
+private: 
+	vector<set<int>>& originalGraph; 
+	vector<int>& originalWeights; 
+
+	int weight(vector<int>& weights, set<int>& selectedVerts){
+		int weight = 0; 
+		for (auto& vert : selectedVerts){
+			weight += weights[vert]; 
+		}
+
+		return weight; 
+	}
+
+	set<int> process(vector<set<int>> graph, vector<int> weights, vector<bool> visited){
+		int nextVertex = 0; 
+
+		int visitedCount = 0; 
+
+		//avoid recursive calls when not needed
+		//check degree of graph 
+		bool largerThanDegTwo = false; 
+		bool isVC = true;
+		set<int> completeVerts{};
+
+		for (int i = 0; i < graph.size(); i++){
+			//count number of connections to vert
+			if (!visited[i]){
+				int edgeCount = 0;
+
+				for (auto& connectedVert : graph[i]){
+					if (!visited[connectedVert])
+						edgeCount++; 
+				}
+				
+				//this vertex has no uncovered edges
+				if (edgeCount != 0)
+					isVC = false; 
+
+				//check for recursion case
+				if (edgeCount > 2){
+					largerThanDegTwo = true;
+					nextVertex = i; 
+					break;
+				}
+			}
+		}
+
+		//all edges are covered
+		if (isVC)
+			return set<int>(); 
+
+		//depending on graph degree, might not need recursion
+		if (!largerThanDegTwo){
+			set<int> results{}; 
+
+			for (int i = 0; i < graph.size(); i++){
+				if (!visited[i]){
+					//pick either current vertex or both of its neighbors
+					int neighborWeight = 0;
+					bool neighborsCovered = true; 
+			
+					for (auto& connectedVert : graph[i]){ 
+						if (!visited[connectedVert]){
+							neighborWeight += weights[connectedVert];
+
+							if (results.find(connectedVert) == results.end())
+								neighborsCovered = false; 
+						}
+					}
+					if (!neighborsCovered){
+						if (neighborWeight < weights[i]){
+							for (auto& connectedVert : graph[i]){ 
+								if (!visited[connectedVert])
+									results.insert(connectedVert);
+								}
+						}else{
+							results.insert(i); 
+						}
+					}
+				}
+			}
+
+			return results;
+		}
+
+		//recursion
+		//case 1: vertex is in MWVC
+
+		vector<bool> inGraph(visited);
+		inGraph[nextVertex] = true;
+		auto resultInclude = process(graph, weights, inGraph);
+		resultInclude.insert(nextVertex);  
+
+		//case 2: vertex is not in MWVC
+		vector<bool> notInVisted(visited);
+		for (auto& connectedVert : graph[nextVertex]) {
+			notInVisted[connectedVert] = true; 
+		}	
+		auto resultNotInclude = process(graph, weights, notInVisted); 
+		//add nextvertex neighbors to list
+		for (auto& connectedVert : graph[nextVertex]){
+			resultNotInclude.insert(connectedVert); 
+		}
+
+		auto weightInclude = weight(weights, resultInclude); 
+		auto weightNotInclude = weight(weights, resultNotInclude);
+		if (weightInclude < weightNotInclude){
+			return resultInclude; 
+		}
+		return resultNotInclude; 
+	}
+};
 
 int main(int argc,char *argv[]) {
-  ifstream fin1;
-  ifstream fin2;
-  assert(argc >2);
-  
-  fin1.open(argv[1]);
-  fin2.open(argv[2]);
-  
-  if (fin1.fail()) {
-    cout << "Couldn't open first arg" << argv[1] << endl;
-  }
-  vector<int> weights;
-  weights = read_weights(fin1);
-  vector<set<int> > graph;
+	ifstream fin1;
+	ifstream fin2;
+	assert(argc >2);
 
-  graph = read_graph(fin2);
-  assert(weights.size() == graph.size());
-  for (int i=0;i<graph.size();i++) {
-    cout << i << ":";
-    for (auto p= graph[i].begin();p!=graph[i].end();++p) {
-      cout << " " << *p;
-    }
-    cout << endl;
-  }
+	fin1.open(argv[1]);
+	fin2.open(argv[2]);
 
-  set<int> S;
-  S = MWVC(graph,weights);
-  cout << "Best VC = ";
-  for (auto p =S.begin();
-       p!=S.end(); ++p) {
-    cout << *p << " ";
-  }
-  cout << endl;
-  cout << "Total Weight = " << total_cost(S,weights) << endl;
+	if (fin1.fail()) {
+		cout << "Couldn't open first arg" << argv[1] << endl;
+	}
+	vector<int> weights;
+	weights = read_weights(fin1);
+	vector<set<int> > graph;
+
+	graph = read_graph(fin2);
+	assert(weights.size() == graph.size());
+	for (int i=0;i<graph.size();i++) {
+		cout << i << ":";
+		for (auto p= graph[i].begin();p!=graph[i].end();++p) {
+			cout << " " << *p;
+		}
+
+		cout << endl;
+	}
+
+	set<int> S;
+	MWVC vertexCover = MWVC(graph, weights); 
+	S = vertexCover.solve(); 
+	cout << "Best VC = ";
+	for (auto p =S.begin(); p!=S.end(); ++p) {
+		cout << *p << " ";
+	}
+	cout << endl;
+	cout << "Total Weight = " << total_cost(S,weights) << endl;
   
   exit(1);
   for (int i=0;i<1024;i++) {

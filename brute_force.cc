@@ -106,20 +106,20 @@ set<int> MWVC(vector<set<int> > &graph,vector<int> &weights) {
     set<int> S;
     for (int j=0;j<n;j++) {
       if (x[j]==1) {
-	S.insert(j);
+	      S.insert(j);
       }
     }
     if (is_VC(graph,S)) {
       if (!found) {
-	best_val = total_cost(S,weights);
-	best = S;
-	found = true;
+	      best_val = total_cost(S,weights);
+	      best = S;
+	      found = true;
       } else {
-	int try_next = total_cost(S,weights);
-	if (try_next < best_val) {
-	  best = S;
-	  best_val = try_next;
-	}
+	      int try_next = total_cost(S,weights);
+	      if (try_next < best_val) {
+	        best = S;
+	        best_val = try_next;
+	      }
       }
     }
   }

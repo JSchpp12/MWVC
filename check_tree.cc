@@ -80,20 +80,19 @@ vector<int> read_weights(ifstream &in) {
 }
 
 bool is_tree(int prev, int curr,
-	     vector<bool> &visited, vector<set<int> > &graph) {
+  vector<bool> &visited, vector<set<int> > &graph) {
 
   visited[curr]=true;
-  for (auto p = graph[curr].begin();p!=graph[curr].end();
-       ++p) {
-    if ((*p)!=prev) { 
-      if (visited[*p]) { // Cycle!
-	return false;
-      }
-      else {
-	bool test = is_tree(curr, *p,visited,graph);
-	if (!test) return false;
-      }
-    }
+	for (auto p = graph[curr].begin();p!=graph[curr].end(); ++p) {
+		if ((*p)!=prev) { 
+  			if (visited[*p]) { // Cycle!
+  				return false;
+  			}
+  		else {
+  			bool test = is_tree(curr, *p,visited,graph);
+  			if (!test) return false;
+  		}
+  	}
   }
   return true;
 }
