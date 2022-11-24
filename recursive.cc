@@ -61,14 +61,14 @@ vector<set<int> > read_graph(ifstream &in) {
   return graph;
 }
 
-vector<int> read_weights(ifstream &in) {
+vector<int> read_weights(ifstream &in, bool readFirst) {
   vector<int> temp;
   bool first = true; 
 
   while (!in.eof()) {
     int t;
     in >> t;
-    if (!in.fail() && !first) {
+    if (!in.fail() && ((first && readFirst) || !first)) {
       temp.push_back(t);
     }else if (first){
         first = false; 
@@ -221,8 +221,30 @@ int main(int argc,char *argv[]) {
 	if (fin1.fail()) {
 		cout << "Couldn't open first arg" << argv[1] << endl;
 	}
+
+	//check if opening tree file
+	std::string weightsFileName(argv[2]); 
+	bool alternateFileFormat = false;
+
+	for (int i = 0; i < weightsFileName.size(); i++){
+		if (weightsFileName.at(i) == '.'){
+			bool lastReadNumber = true; 
+
+			//need to find if the name contains a t (i.e 3t.weights)
+			for (int j = i-1; j > 0; j--){
+				if (lastReadNumber && !isdigit(weightsFileName.at(j))){
+					//this should be the character 
+					if (weightsFileName.at(j) == 't')
+						alternateFileFormat = true; 
+						break;
+				}
+			}
+			break; 
+		}
+	}
+
 	vector<int> weights;
-	weights = read_weights(fin1);
+	weights = read_weights(fin1, alternateFileFormat);
 	vector<set<int> > graph;
 
 	graph = read_graph(fin2);
