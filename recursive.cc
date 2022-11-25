@@ -152,41 +152,28 @@ private:
 		if (!largerThanDegTwo){
 			set<int> results{}; 
 
-			for (int i = 0; i < graph.size(); i++){
-				if (!visited[i]){
-					//pick either current vertex or both of its neighbors
-					int neighborWeight = 0;
-					bool neighborsCovered = true; 
-			
-					for (auto& connectedVert : graph[i]){ 
-						if (!visited[connectedVert]){
-							neighborWeight += weights[connectedVert];
-
-							if (results.find(connectedVert) == results.end())
-								neighborsCovered = false; 
-						}
-					}
-					if (!neighborsCovered){
-						if (neighborWeight < weights[i]){
-							for (auto& connectedVert : graph[i]){ 
-								if (!visited[connectedVert])
-									results.insert(connectedVert);
-								}
-						}else{
-							results.insert(i); 
-						}
-					}
-				}
-			}
+            for (int i = 0; i < graph.size(); i++){
+                if (!visited[i]){
+                    for (auto& conVert : graph[i]){
+                        if (!visited[conVert]){
+                            if (weights[i] < weights[conVert]){
+                                results.insert(i);
+                            }else{
+                                results.insert(conVert); 
+                            }
+                        }
+                    }
+                }
+            }
 
 			return results;
 		}
 
 		//recursion
 		//case 1: vertex is in MWVC
+		visited[nextVertex] = true; 
 
 		vector<bool> inGraph(visited);
-		inGraph[nextVertex] = true;
 		auto resultInclude = process(graph, weights, inGraph);
 		resultInclude.insert(nextVertex);  
 
@@ -195,6 +182,7 @@ private:
 		for (auto& connectedVert : graph[nextVertex]) {
 			notInVisted[connectedVert] = true; 
 		}	
+
 		auto resultNotInclude = process(graph, weights, notInVisted); 
 		//add nextvertex neighbors to list
 		for (auto& connectedVert : graph[nextVertex]){
