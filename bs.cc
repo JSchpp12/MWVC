@@ -12,23 +12,43 @@
 
 using namespace std;
 
-bool is_VC(vector<set<int> > &graph,
-	   set<int> &S) {
+bool is_VC(vector<set<int> > &graph, set<int> &set, vector<bool> &visited) {
+	bool is_VC = true; 
+	for (int i = 0; i < graph.size(); i++){
+		if (!visited[i]){
+			for (auto& connectedVert : graph[i]){
+				if (!visited[connectedVert]){
+					bool edgeCovered = false; 
 
-  for (int i=0;i<graph.size();i++) {
-    //
-    if (S.count(i) >0) {
-      // i is covered and all edges leaving i
-    } else {
-      for (auto p = graph[i].begin();
-	   p!=graph[i].end(); ++p) {
-	if (S.count(*p)==0) {
-	  return false; // Not a VC
+					for (auto& coveredVert : set){
+						if (i == coveredVert || connectedVert == coveredVert){
+							edgeCovered = true; 
+							break;
+						}
+					}
+
+					if (!edgeCovered)
+						return false; 
+				}
+			}
+		}
 	}
-      }
-    }
-  }
-  return true;
+	return true; 
+
+//   for (int i=0;i<graph.size();i++) {
+//     //
+//     if (S.count(i) >0) {
+//       // i is covered and all edges leaving i
+//     } else {
+//       for (auto p = graph[i].begin();
+// 	   p!=graph[i].end(); ++p) {
+// 	if (S.count(*p)==0) {
+// 	  return false; // Not a VC
+// 	}
+//       }
+//     }
+//   }
+//   return true;
 }
 
 vector<set<int> > read_graph(ifstream &in) {
@@ -197,120 +217,73 @@ private:
     }
 
 	set<int> process(vector<set<int>> graph, vector<int> weights, vector<bool> visited, int k){
-		int nextVertex = 0; 
-
-		int visitedCount = 0; 
-
-		//avoid recursive calls when not needed
-		//check degree of graph 
-		bool largerThanDegTwo = false; 
-		bool isVC = true;
-		set<int> completeVerts{};
-
-        if (k <= 0){
-            return set<int>(); 
-        }
+		int nextVertex = -1; 
 
 		for (int i = 0; i < graph.size(); i++){
-			//count number of connections to vert
 			if (!visited[i]){
-				int edgeCount = 0;
-
-				for (auto& connectedVert : graph[i]){
-					if (!visited[connectedVert])
-						edgeCount++; 
+				bool allEdgesCovered = true; 
+				for (auto& conVert : graph[i]){
+					if (!visited[conVert])
+						allEdgesCovered = false; 
 				}
-				
-				//this vertex has no uncovered edges
-				if (edgeCount != 0)
-					isVC = false; 
-
-				//check for recursion case
-
-				largerThanDegTwo = true;
-				nextVertex = i; 
-				break;
+				if (!allEdgesCovered)
+					nextVertex = i; 
 			}
 		}
-
-		//all edges are covered
-		if (isVC)
+		
+		//base case
+		if (k <= 0 || nextVertex == -1)
 			return set<int>(); 
-
-		//depending on graph degree, might not need recursion
-		if (!largerThanDegTwo ){
-			set<int> results{}; 
-
-            for (int i = 0; i < graph.size(); i++){
-                if (!visited[i]){
-                    for (auto& conVert : graph[i]){
-                        if (!visited[conVert]){
-                            if (weights[i] < weights[conVert]){
-                                results.insert(i);
-                            }else{
-                                results.insert(conVert); 
-                            }
-                        }
-                    }
-                }
-            }
-            
-            cout << "------------" << endl; 
-            for (auto& res : results){
-                cout << res << " ";
-            }
-            cout << endl; 
-
-            if (results.size() > k)
-            {
-                cout << "Too large,k=" << k << ",rs=" << results.size()  << endl; 
-                return set<int>(); 
-            }
-
-            cout << "returning" << endl; 
-			return results;
-		}
 
 		//recursion
 		//case 1: vertex is in MWVC
-        visited[nextVertex] = true; 
+        vector<bool> inVisited(visited);
+        inVisited[nextVertex] = true;
 
-        vector<bool> inGraph(visited);
-        inGraph[nextVertex] = true;
-
-        auto resultInclude = process(graph, weights, inGraph, k-1);
+        auto resultInclude = process(graph, weights, inVisited, k-1);
         resultInclude.insert(nextVertex);  
+
+		if (!is_VC(graph, resultInclude, visited)){
+			resultInclude = set<int>(); 
+		}
 
         //case 2: vertex is not in MWVC
         vector<bool> notInVisted(visited);
-            int nSize = 0; 
+		int nSize = 0; 
         for (auto& connectedVert : graph[nextVertex]) {
             if (!visited[connectedVert])
-                nSize++; 
+			nSize++; 
             notInVisted[connectedVert] = true; 
         }
 
         //calculate maximum matching for the current graph	
         auto maximumMatching_notInclude = matching(graph, weights, notInVisted); 
-        
-        if (maximumMatching_notInclude.size() + nSize > k){
-            return resultInclude; 
-        }
+		auto resultNotInclude = process(graph, weights, notInVisted, k-nSize); 
 
-        auto resultNotInclude = process(graph, weights, notInVisted, k-nSize); 
+        if (maximumMatching_notInclude.size() + nSize - 1 > k){
+			return resultInclude; 
+        }
 
         //add nextvertex neighbors to list
         for (auto& connectedVert : graph[nextVertex]){
-            resultNotInclude.insert(connectedVert); 
+			if (!visited[connectedVert])
+            	resultNotInclude.insert(connectedVert); 
         }
+
+		if (!is_VC(graph, resultNotInclude, visited)){
+			resultNotInclude = set<int>(); 
+		}
 
         auto weightInclude = weight(weights, resultInclude); 
         auto weightNotInclude = weight(weights, resultNotInclude);
 
-        if (weightInclude < weightNotInclude){
+        if (weightNotInclude != 0 && weightInclude != 0 && weightInclude < weightNotInclude){
             return resultInclude; 
-        }
-        return resultNotInclude; 
+        }else if ( weightInclude != 0 && weightNotInclude == 0){
+			return resultInclude; 
+		}
+
+		return resultNotInclude; 
     }
 };
 
