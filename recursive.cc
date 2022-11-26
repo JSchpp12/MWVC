@@ -185,9 +185,10 @@ private:
 
 		auto resultNotInclude = process(graph, weights, notInVisted); 
 		//add nextvertex neighbors to list
-		for (auto& connectedVert : graph[nextVertex]){
-			resultNotInclude.insert(connectedVert); 
-		}
+        for (auto& connectedVert : graph[nextVertex]){
+			if (!visited[connectedVert])
+            	resultNotInclude.insert(connectedVert); 
+        }
 
 		auto weightInclude = weight(weights, resultInclude); 
 		auto weightNotInclude = weight(weights, resultNotInclude);

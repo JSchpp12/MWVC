@@ -34,21 +34,6 @@ bool is_VC(vector<set<int> > &graph, set<int> &set, vector<bool> &visited) {
 		}
 	}
 	return true; 
-
-//   for (int i=0;i<graph.size();i++) {
-//     //
-//     if (S.count(i) >0) {
-//       // i is covered and all edges leaving i
-//     } else {
-//       for (auto p = graph[i].begin();
-// 	   p!=graph[i].end(); ++p) {
-// 	if (S.count(*p)==0) {
-// 	  return false; // Not a VC
-// 	}
-//       }
-//     }
-//   }
-//   return true;
 }
 
 vector<set<int> > read_graph(ifstream &in) {
