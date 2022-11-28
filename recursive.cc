@@ -215,23 +215,43 @@ int main(int argc,char *argv[]) {
 	std::string weightsFileName(argv[2]); 
 	bool alternateFileFormat = false;
 
-	for (int i = 0; i < weightsFileName.size(); i++){
-		if (weightsFileName.at(i) == '.'){
-			bool lastReadNumber = true; 
-
-			//need to find if the name contains a t (i.e 3t.weights)
-			for (int j = i-1; j > 0; j--){
-				if (lastReadNumber && !isdigit(weightsFileName.at(j))){
-					//this should be the character 
-					if (weightsFileName.at(j) == 't')
-						alternateFileFormat = true; 
-						break;
-				}
+	//detect alternative file format
+	//check if pd file 
+	{
+		bool found_p = false; 
+		for (int i = 0; i < weightsFileName.size(); i++){
+			if (found_p && weightsFileName.at(i) == 'd'){
+				alternateFileFormat = true; 
+				break; 
 			}
-			break; 
+
+			if (!found_p && weightsFileName.at(i) == 'p')
+				found_p = true; 
+			else
+				found_p = false;
 		}
 	}
 
+	if (!alternateFileFormat){
+	//check if tree file
+		for (int i = 0; i < weightsFileName.size(); i++){
+			if (weightsFileName.at(i) == '.'){
+				bool lastReadNumber = true; 
+
+				//need to find if the name contains a t (i.e 3t.weights)
+				for (int j = i-1; j > 0; j--){
+					if (lastReadNumber && !isdigit(weightsFileName.at(j))){
+						//this should be the character 
+						if (weightsFileName.at(j) == 't')
+							alternateFileFormat = true; 
+							break;
+					}
+				}
+				break; 
+			}
+		}
+	}
+	
 	vector<int> weights;
 	weights = read_weights(fin1, alternateFileFormat);
 	vector<set<int> > graph;
